@@ -1,0 +1,40 @@
+# =====================
+# Node modules
+# =====================
+server/node_modules/
+client/node_modules/
+
+# =====================
+# Logs
+# =====================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =====================
+# Environment variables
+# =====================
+server/.env
+client/.env
+
+# =====================
+# Build / Dist folders
+# =====================
+client/dist/
+client/build/
+
+# =====================
+# OS or Editor specific
+# =====================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# =====================
+# Optional cache folders
+# =====================
+server/.cache/
+client/.cache/
