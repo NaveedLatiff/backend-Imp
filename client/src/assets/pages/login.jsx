@@ -23,8 +23,7 @@ export default function Login() {
         try {
             if (!isLogin) {
                 const { data } = await axios.post("api/auth/register",
-                    { email, name, password },
-                    { withCredentials: true });
+                    { email, name, password });
 
                 if (data.success) {
                     setIsLoggedIn(true)
@@ -38,8 +37,7 @@ export default function Login() {
             }
             else {
                 const { data } = await axios.post("api/auth/login",
-                    { email, password },
-                    { withCredentials: true }
+                    { email, password }
                 );
 
                 if (data.success) {
