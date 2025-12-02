@@ -13,10 +13,11 @@ import  {verifyResetOtp} from '../controllers/auth.js'
 
 
 import userAuth from '../middleware/userAuth.js';
+import { validationLogin, validationRegistration } from '../middleware/formValidation.js';
 
 
-authRouter.post('/register',register);
-authRouter.post('/login',login);
+authRouter.post('/register',validationRegistration,register);
+authRouter.post('/login',validationLogin,login);
 authRouter.post('/logout',logout);
 authRouter.post('/send-verification-otp',userAuth,sendVerifyOtp);
 authRouter.post('/verify-email',userAuth,verifyEmail);

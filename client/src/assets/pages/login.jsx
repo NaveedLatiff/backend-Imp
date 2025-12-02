@@ -3,7 +3,6 @@ import { useContext } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../context/AppContext.jsx";
-import { useEffect } from "react";
 
 export default function Login() {
     const { isLoggedIn, setIsLoggedIn, setUserData } = useContext(AppContent)
@@ -11,21 +10,30 @@ export default function Login() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [errors, setErrors] = useState([]);
+    const [errorMessage, setErrorMessage] = useState("");
+
     const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setErrors([]);
+        setErrorMessage("");
+
         try {
             if (!isLogin) {
                 const { data } = await axios.post("api/auth/register",
                     { email, name, password },
                     { withCredentials: true });
-                console.log(data.message);
 
                 if (data.success) {
                     setIsLoggedIn(true)
                     setUserData(data.userData)
                     navigate('/')
+                } else if (data.errors) {
+                    setErrors(data.errors)
+                } else {
+                    setErrorMessage(data.message || "Registration failed")
                 }
             }
             else {
@@ -33,21 +41,25 @@ export default function Login() {
                     { email, password },
                     { withCredentials: true }
                 );
-                console.log(data.message)
+
                 if (data.success) {
                     setIsLoggedIn(true)
                     setUserData(data.userData)
                     navigate('/')
+                } else if (data.errors) {
+                    setErrors(data.errors)
+                } else {
+                    setErrorMessage(data.message || "Login failed")
                 }
             }
         } catch (err) {
             console.log(`Error While ${isLogin ? "Login" : "Signup"}`, err.message)
+            setErrorMessage(`Error: ${err.response?.data?.message || err.message || "Something went wrong"}`)
         }
     };
 
-
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="flex items-center justify-center flex-col min-h-screen bg-gray-100">
             <form
                 onSubmit={handleSubmit}
                 className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm"
@@ -62,6 +74,7 @@ export default function Login() {
                         <input
                             type="text"
                             name="name"
+                            value={name}
                             onChange={(e) => setName(e.target.value)}
                             className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                             placeholder="Enter your name"
@@ -75,6 +88,7 @@ export default function Login() {
                     <input
                         type="email"
                         name="email"
+                        value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                         placeholder="Enter your email"
@@ -87,13 +101,20 @@ export default function Login() {
                     <input
                         type="password"
                         name="password"
+                        value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring focus:ring-blue-300"
                         placeholder="Enter your password"
                         required
                     />
                 </div>
-                    <p className="text-blue-900 cursor-pointer" onClick={()=>navigate('/reset-password')}>forgot Password?</p>
+
+                {isLogin && (
+                    <p className="text-blue-900 cursor-pointer mb-4" onClick={() => navigate('/reset-password')}>
+                        Forgot Password?
+                    </p>
+                )}
+
                 <button
                     type="submit"
                     className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
@@ -105,13 +126,33 @@ export default function Login() {
                     {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
                     <button
                         type="button"
-                        onClick={() => setIsLogin(!isLogin)}
+                        onClick={() => {
+                            setIsLogin(!isLogin)
+                            setErrors([])
+                            setErrorMessage("")
+                        }}
                         className="text-blue-600 hover:underline"
                     >
                         {isLogin ? "Sign Up" : "Login"}
                     </button>
                 </p>
             </form>
+
+            {errors.length > 0 && (
+                <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-3 w-full max-w-sm">
+                    <ul className="list-disc list-inside text-red-600 text-sm space-y-1">
+                        {errors.map((x, index) => (
+                            <li key={index}>{x.msg}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {errorMessage && (
+                <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-3 w-full max-w-sm">
+                    <p className="text-red-600 text-sm">{errorMessage}</p>
+                </div>
+            )}
         </div>
     );
 }

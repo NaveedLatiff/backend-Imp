@@ -2,16 +2,23 @@ import jwt from "jsonwebtoken";
 import User from "../models/auth.js";
 import bcrypt from 'bcryptjs'
 import transporter from "../config/nodemailer.js";
+import { validationResult } from "express-validator";
+
 
 export const register = async (req, res) => {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-        return res.json({
-            success: false,
-            message: "Please Fill In All The Fields"
-        })
-    }
+
     try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+
+        const { name, email, password } = req.body;
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.json({
@@ -68,15 +75,19 @@ export const register = async (req, res) => {
 }
 
 export const login = async (req, res) => {
-    const { email, password } = req.body
 
-    if (!email || !password) {
-        return res.json({
-            success: false,
-            message: "Please Fill In All The Fields"
-        })
-    }
     try {
+        const errors = validationResult(req)
+
+        if (!errors.isEmpty()) {
+            return res.json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+
+        const {email,password}=req.body
+
         const user = await User.findOne({ email })
         if (!user) {
             return res.json({
@@ -331,62 +342,62 @@ export const sendResetOtp = async (req, res) => {
 }
 
 export const verifyResetOtp = async (req, res) => {
-  const { email, otp } = req.body;
-  if (!email || !otp) {
-    return res.json({ success: false, message: "Email and OTP are required" });
-  }
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) return res.json({ success: false, message: "User not found" });
-
-    if (user.resetOtp === '' || user.resetOtp !== otp) {
-      return res.json({ success: false, message: "Invalid OTP" });
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+        return res.json({ success: false, message: "Email and OTP are required" });
     }
 
-    if (user.resetOtpExpireAt < Date.now()) {
-      return res.json({ success: false, message: "OTP expired" });
-    }
+    try {
+        const user = await User.findOne({ email });
+        if (!user) return res.json({ success: false, message: "User not found" });
 
-    return res.json({ success: true, message: "OTP verified successfully" });
-  } catch (err) {
-    return res.json({ success: false, message: "Internal Server Error" });
-  }
+        if (user.resetOtp === '' || user.resetOtp !== otp) {
+            return res.json({ success: false, message: "Invalid OTP" });
+        }
+
+        if (user.resetOtpExpireAt < Date.now()) {
+            return res.json({ success: false, message: "OTP expired" });
+        }
+
+        return res.json({ success: true, message: "OTP verified successfully" });
+    } catch (err) {
+        return res.json({ success: false, message: "Internal Server Error" });
+    }
 };
 
 
 export const resetPassword = async (req, res) => {
-  const { email, password } = req.body;
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.json({
-      success: false,
-      message: "Please provide email and new password",
-    });
-  }
-
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.json({
-        success: false,
-        message: "User not found",
-      });
+    if (!email || !password) {
+        return res.json({
+            success: false,
+            message: "Please provide email and new password",
+        });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    user.password = hashedPassword;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User not found",
+            });
+        }
 
-    await user.save();
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
 
-    return res.json({
-      success: true,
-      message: "Password updated successfully",
-    });
-  } catch (err) {
-    return res.json({
-      success: false,
-      message: `Internal Server Error: ${err.message}`,
-    });
-  }
+        await user.save();
+
+        return res.json({
+            success: true,
+            message: "Password updated successfully",
+        });
+    } catch (err) {
+        return res.json({
+            success: false,
+            message: `Internal Server Error: ${err.message}`,
+        });
+    }
 };
